@@ -156,10 +156,12 @@ def forcefillna(obj, preserved_int = False, preserved_int_list = [], fill_list =
         return df
     else:
         raise ValueError(f'Type {type(obj)} is not supported.')
-def forcefillna_pair(df_train, df_test, preserved_int = False, preserved_int_list = [], fill_list = None, exempt_list = [], fill_float = True, fill_int = True, fill_cat = True, fill_obj = True, add_col = False, y_col = 'y'):
+def forcefillna_pair(df_train, df_test, preserved_int = False, preserved_int_list = [], fill_list = None, exempt_list = [], fill_float = True, fill_int = True, fill_cat = True, fill_obj = True, add_col = False, y_col = 'y', test_has_y = False):
     train_exempt_list = exempt_list
     if isinstance(exempt_list, list):
         train_exempt_list.append(y_col)#Add y_col to train_exempt_list
+    if test_has_y:#test has y_col
+        exempt_list.append(y_col)
     if add_col:
         full_extra_cols_list = list(set(find_cols_with_na(df_train)).union(set(find_cols_with_na(df_test))))
         #print(full_extra_cols_list)
@@ -169,3 +171,26 @@ def forcefillna_pair(df_train, df_test, preserved_int = False, preserved_int_lis
         df_train_filled = forcefillna(df_train, preserved_int, preserved_int_list, fill_list, train_exempt_list, fill_float, fill_int, fill_cat, fill_obj, add_col)
         df_test_filled = forcefillna(df_test, preserved_int, preserved_int_list, fill_list, exempt_list, fill_float, fill_int, fill_cat, fill_obj, add_col)
     return df_train_filled, df_test_filled
+def get_dummies_pair(df_train, df_test, y_col = 'y', test_has_y = False):
+    df_dummies_train = pandas.get_dummies(df_train)
+    df_dummies_test = pandas.get_dummies(df_test)
+    dummy_cols_train = df_dummies_train.columns.tolist()
+    dummy_cols_train.remove(y_col)
+    dummy_cols_train.append(y_col)#Move y_col to the end
+    df_dummies_train = df_dummies_train[dummy_cols_train]
+    dummy_cols_test = df_dummies_test.columns.tolist()
+    if test_has_y:
+        if set(dummy_cols_train) == set(dummy_cols_test):
+            df_dummies_test = df_dummies_test[dummy_cols_train]
+        else:
+            raise ValueError("Columns of the training dataframe and the testing dataframe aren't compatible.")
+    else:
+        dummy_cols_train_set = set(dummy_cols_train)
+        dummy_cols_test_set = set(dummy_cols_test)
+        diff1 = dummy_cols_train_set.difference(dummy_cols_test_set)#should be single element set
+        diff0 = dummy_cols_test_set.difference(dummy_cols_train_set)#should be empty set
+        if diff1 == {y_col} and diff0 == set():
+            df_dummies_test = df_dummies_test[dummy_cols_train[:-1]]
+        else:
+             raise ValueError("Columns of the training dataframe and the testing dataframe aren't compatible.")
+    return df_dummies_train, df_dummies_test

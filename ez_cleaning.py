@@ -1,9 +1,5 @@
 import pandas
 import copy
-#Print an entire dataframe or a series
-def full_print(obj):
-    with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
-        print(obj)
 #Get NA info
 def get_na_info(df, ascending = True):
     s_count = df.isna().sum().sort_values(ascending = ascending)

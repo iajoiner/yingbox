@@ -6,7 +6,7 @@ def full_print(obj):
         print(obj)
 #Get NA info
 def get_na_info(df, ascending = True):
-    s_count = df.isna().sum().sort_values(ascending)
+    s_count = df.isna().sum().sort_values(ascending = ascending)
     n_rows = df.shape[0]
     s_per = s_count/n_rows * 100
     return pandas.DataFrame({'count':s_count, 'percent': s_per})

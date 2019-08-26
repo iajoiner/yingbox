@@ -1,5 +1,22 @@
 import pandas
 import copy
+#Print an entire dataframe or a series
+def full_print(obj):
+    with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(obj)
+#Get NA info
+def get_na_info(df, ascending = True):
+    s_count = df.isna().sum().sort_values(ascending)
+    n_rows = df.shape[0]
+    s_per = s_count/n_rows * 100
+    return pandas.DataFrame({'count':s_count, 'percent': s_per})
+#Drop columns with percentages over a certain threshold
+def dropna_percent(df, threshold, inplace = False):
+    if inplace:
+        df = df.loc[:, df.isnull().mean() < threshold]
+        return None
+    else:
+        return df.loc[:, df.isnull().mean() < threshold]
 #Obtain a list of columns with at least one na
 #treats_empty_inf_as_na is True if empty strings and numpy.inf are treated as na
 def find_cols_with_na(df, treats_empty_inf_as_na = False):
@@ -147,10 +164,8 @@ def forcefillna(obj, preserved_int = False, preserved_int_list = [], fill_list =
                     else:
                         df[col] = _series_forcefillna(df[col], col in preserved_int_list)
         if mandatory_exist_add_list:#Add more lists!
-            #print('Meow')
             mandatory_exist_add_list = [col+'_exists' for col in mandatory_exist_add_list]
             added_list = [col for col in mandatory_exist_add_list if col not in df.columns]
-            #print(added_list)
             for col in added_list:
                 df[col] = 1
         return df
@@ -164,7 +179,6 @@ def forcefillna_pair(df_train, df_test, preserved_int = False, preserved_int_lis
         exempt_list.append(y_col)
     if add_col:
         full_extra_cols_list = list(set(find_cols_with_na(df_train)).union(set(find_cols_with_na(df_test))))
-        #print(full_extra_cols_list)
         df_train_filled = forcefillna(df_train, preserved_int, preserved_int_list, fill_list, train_exempt_list, fill_float, fill_int, fill_cat, fill_obj, add_col, full_extra_cols_list)
         df_test_filled = forcefillna(df_test, preserved_int, preserved_int_list, fill_list, exempt_list, fill_float, fill_int, fill_cat, fill_obj, add_col, full_extra_cols_list)
     else:
